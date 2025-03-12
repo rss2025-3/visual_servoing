@@ -6,6 +6,7 @@ import numpy as np
 
 from vs_msgs.msg import ConeLocation, ParkingError
 from ackermann_msgs.msg import AckermannDriveStamped
+import math
 
 class ParkingController(Node):
     """
@@ -26,22 +27,52 @@ class ParkingController(Node):
             self.relative_cone_callback, 1)
 
         self.parking_distance = .75 # meters; try playing with this number!
+        self.acceptable_angle = 10 * math.pi / 180
         self.relative_x = 0
         self.relative_y = 0
+
+        self.L = 0.25
+        self.L_ah = 0.33
+        self.speed = 1.0
+        self.backwards = False
 
         self.get_logger().info("Parking Controller Initialized")
 
     def relative_cone_callback(self, msg):
         self.relative_x = msg.x_pos
         self.relative_y = msg.y_pos
+
+        eta = math.atan(self.relative_y / self.relative_x)
+        delta = math.atan(2 * self.L * math.sin(eta) / self.L_ah)
+
+        current_time = self.get_clock().now()
         drive_cmd = AckermannDriveStamped()
+        drive_cmd.header.frame_id = "base_link"
+        drive_cmd.header.stamp = current_time.to_msg()
+        
+        if self.backwards is False:
+            if self.relative_x < self.parking_distance and abs(eta) < self.acceptable_angle:
+                # we're parked
+                drive_cmd.drive.speed = 0.0
+                drive_cmd.drive.steering_angle = 0.0
+            elif self.relative_x < self.parking_distance:
+                # we're too close
+                drive_cmd.drive.speed = -1 * self.speed
+                drive_cmd.drive.steering_angle = 0.0
+                self.backwards = True
+            else:
+                drive_cmd.drive.speed = 1 * self.speed
+                drive_cmd.drive.steering_angle = delta
+        else:
+            if self.relative_x > 2 * self.parking_distance:
+                drive_cmd.drive.speed = 1 * self.speed
+                drive_cmd.drive.steering_angle = delta
+                self.backwards = False
+            else:
+                drive_cmd.drive.speed = -1 * self.speed
+                drive_cmd.drive.steering_angle = 0.0
 
-        #################################
 
-        # YOUR CODE HERE
-        # Use relative position and your control law to set drive_cmd
-
-        #################################
 
         self.drive_pub.publish(drive_cmd)
         self.error_publisher()
@@ -52,6 +83,9 @@ class ParkingController(Node):
         with rqt_plot to plot the success of the controller
         """
         error_msg = ParkingError()
+        error_msg.x_error = float(self.relative_x)
+        error_msg.y_error = float(self.relative_y)
+        error_msg.distance_error = float(math.sqrt(self.relative_x ** 2 + self.relative_y ** 2))
 
         #################################
 
