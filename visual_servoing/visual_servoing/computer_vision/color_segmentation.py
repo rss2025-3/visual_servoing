@@ -34,7 +34,50 @@ def cd_color_segmentation(img, template):
 	"""
 	########## YOUR CODE STARTS HERE ##########
 
-	bounding_box = ((0,0),(0,0))
+	# Using cv2.cvtColor() method
+	# Using cv2.COLOR_BGR2HSV color spac
+
+	# conversion code
+	image = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+
+	# Define the lower and upper bounds for the hue range (orange color)
+	lower_orange = np.array([10, 25, 50])
+	upper_orange = np.array([20, 255, 255])
+
+	# Create a mask using cv2.inRange
+	mask = cv2.inRange(image, lower_orange, upper_orange)
+
+	# Apply the mask to the original image
+	result = cv2.bitwise_and(image, image, mask=mask)
+	orange_points = np.nonzero(result)
+
+	# Threshold the image to get only orange colors
+	mask = cv2.inRange(image, lower_orange, upper_orange)
+
+	# Find contours
+	contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+	# Find the largest contour (assuming the cone is the largest orange object)
+	if contours:
+		largest_contour = max(contours, key=cv2.contourArea)
+
+		# Get bounding box
+		x1, y1, x2, y2 = cv2.boundingRect(largest_contour)
+
+		# Draw the bounding box on the original image
+		cv2.rectangle(image, (x1, y1), (x1 + x2, y1 + y2), (0, 255, 0), 2)
+
+		x2 = x1 + x2
+		y2 = y1 + y2
+
+	bounding_box =  ((x1, y1), (x2, y2))
+
+	#image_print(image)
+
+	#Displaying the image 
+	#cv2.imshow(window_name, image)
+
+	#bounding_box = ((0,0),(0,0))
 
 	########### YOUR CODE ENDS HERE ###########
 
