@@ -32,27 +32,40 @@ def cd_color_segmentation(img, template):
 		bbox: ((x1, y1), (x2, y2)); the bounding box of the cone, unit in px
 				(x1, y1) is the top left of the bbox and (x2, y2) is the bottom right of the bbox
 	"""
+	bounding_box = ((0,0),(0,0))
+
 	########## YOUR CODE STARTS HERE ##########
+
+    # Find min and max values for each channel (H, S, V)
+	# min_hsv = np.min(template_image_hsv, axis=(0, 1))  # Min per channel
+	# max_hsv = np.max(template_image_hsv, axis=(0, 1))  # Max per channel
+
+	# print(min_hsv)
+	# print(max_hsv)
 
 	# Using cv2.cvtColor() method
 	# Using cv2.COLOR_BGR2HSV color spac
 
 	# conversion code
-	image = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+	bgr_image = img
+	hsv_image = cv2.cvtColor(bgr_image, cv2.COLOR_BGR2HSV)
 
 	# Define the lower and upper bounds for the hue range (orange color)
-	lower_orange = np.array([10, 150, 150])
-	upper_orange = np.array([20, 255, 255])
+	#lower_orange = np.array([10, 150, 100])
+	#upper_orange = np.array([30, 255, 255])
+
+	lower_orange = np.array([5, 200, 100])
+	upper_orange = np.array([35, 255, 255])
 
 	# Create a mask using cv2.inRange
-	mask = cv2.inRange(image, lower_orange, upper_orange)
+	mask = cv2.inRange(hsv_image, lower_orange, upper_orange)
 
 	# Apply the mask to the original image
 	#result = cv2.bitwise_and(image, image, mask=mask)
 	#orange_points = np.nonzero(result)
 
 	# Threshold the image to get only orange colors
-	mask = cv2.inRange(image, lower_orange, upper_orange)
+	mask = cv2.inRange(hsv_image, lower_orange, upper_orange)
 
 	# Find contours
 	contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
@@ -65,19 +78,17 @@ def cd_color_segmentation(img, template):
 		x1, y1, dx, dy = cv2.boundingRect(largest_contour)
 
 		# Draw the bounding box on the original image
-		cv2.rectangle(image, (x1, y1), (x1 + dx, y1 + dy), (0, 255, 0), 2)
+		cv2.rectangle(bgr_image, (x1, y1), (x1 + dx, y1 + dy), (0, 255, 0), 2)
 
 		x2 = x1 + dx
 		y2 = y1 + dy
 
-	bounding_box =  ((x1, y1), (x2, y2))
+		bounding_box =  ((x1, y1), (x2, y2))
 
-	image_print(image)
+	image_print(bgr_image)
 
 	#Displaying the image 
 	#cv2.imshow(window_name, image)
-
-	#bounding_box = ((0,0),(0,0))
 
 	########### YOUR CODE ENDS HERE ###########
 
