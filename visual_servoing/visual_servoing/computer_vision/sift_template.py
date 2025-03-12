@@ -36,7 +36,7 @@ def cd_sift_ransac(img, template):
 				(x1, y1) is the bottom left of the bbox and (x2, y2) is the top right of the bbox
 	"""
 	# Minimum number of matching features
-	MIN_MATCH = 10 # Adjust this value as needed
+	MIN_MATCH = 7 # Adjust this value as needed
 	# Create SIFT
 	sift = cv2.xfeatures2d.SIFT_create()
 
@@ -61,6 +61,9 @@ def cd_sift_ransac(img, template):
 
 		# Create mask
 		M, mask = cv2.findHomography(src_pts, dst_pts, cv2.RANSAC, 5.0)
+		if M is None:
+			print("Homography computation failed. Not enough good matches.")
+			return ((0, 0), (0, 0))
 		matchesMask = mask.ravel().tolist()
 
 		h, w = template.shape
@@ -68,7 +71,14 @@ def cd_sift_ransac(img, template):
 
 		########## YOUR CODE STARTS HERE ##########
 
-		x_min = y_min = x_max = y_max = 0
+		dst = cv2.perspectiveTransform(pts, M)
+
+		x_min = np.min(dst[:, 0, 0])
+		y_min = np.min(dst[:, 0, 1])
+		x_max = np.max(dst[:, 0, 0])
+		y_max = np.max(dst[:, 0, 1])
+
+		print(x_min,y_min,x_max,y_max)
 
 		########### YOUR CODE ENDS HERE ###########
 
@@ -101,6 +111,7 @@ def cd_template_matching(img, template):
 
 	# Keep track of best-fit match
 	best_match = None
+	best_val = -1
 
 	# Loop over different scales of image
 	for scale in np.linspace(1.5, .5, 50):
@@ -117,7 +128,23 @@ def cd_template_matching(img, template):
 
 		# Remember to resize the bounding box using the highest scoring scale
 		# x1,y1 pixel will be accurate, but x2,y2 needs to be correctly scaled
-		bounding_box = ((0,0),(0,0))
-		########### YOUR CODE ENDS HERE ###########
+		result = cv2.matchTemplate(img_canny, resized_template, cv2.TM_CCOEFF_NORMED)
+
+		min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(result)
+
+		if max_val > best_val:
+			best_val = max_val
+			best_match = max_loc
+			best_scale = scale
+			best_size = (w,h)
+
+	if best_match is None:
+		return ((0,0),(0,0))
+
+	(x1,y1) = best_match
+	(w,h) = best_size
+	(x2,y2) = (int(x1 + w * best_scale), int(y1+h*best_scale))
+	return ((x1,y1), (x2,y2))
+	########### YOUR CODE ENDS HERE ###########
 
 	return bounding_box
