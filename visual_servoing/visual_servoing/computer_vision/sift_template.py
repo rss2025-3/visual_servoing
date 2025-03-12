@@ -78,7 +78,7 @@ def cd_sift_ransac(img, template):
 		x_max = np.max(dst[:, 0, 0])
 		y_max = np.max(dst[:, 0, 1])
 
-		print(x_min,y_min,x_max,y_max)
+		#print(x_min,y_min,x_max,y_max)
 
 		########### YOUR CODE ENDS HERE ###########
 

@@ -129,7 +129,6 @@ def test_all_algorithms(csv_file_path, template_file_path, output_file_path, swa
     with output_file:  
         writer = csv.writer(output_file)
         writer.writerows(total_data)
-
     print("Scores outputted to %s" % (output_file_path))
 
 if __name__ == '__main__':

@@ -85,7 +85,7 @@ def cd_color_segmentation(img, template):
 
 		bounding_box =  ((x1, y1), (x2, y2))
 
-	image_print(bgr_image)
+	#image_print(bgr_image)
 
 	#Displaying the image 
 	#cv2.imshow(window_name, image)
