@@ -26,12 +26,12 @@ class ParkingController(Node):
         self.create_subscription(ConeLocation, "/relative_cone", 
             self.relative_cone_callback, 1)
 
-        self.parking_distance = .75 # meters; try playing with this number!
+        self.parking_distance = 0.05 # meters; try playing with this number!
         self.acceptable_angle = 10 * math.pi / 180
         self.relative_x = 0
         self.relative_y = 0
 
-        self.L = 0.25
+        self.L = 0.1
         self.L_ah = 0.33
         self.speed = 1.0
         self.backwards = False
@@ -40,8 +40,9 @@ class ParkingController(Node):
 
     def relative_cone_callback(self, msg):
         self.relative_x = msg.x_pos
-        self.relative_y = msg.y_pos
-
+        self.relative_y = msg.y_pos+0.06
+        self.get_logger().info(f"relative x {self.relative_x}")
+        self.get_logger().info(f"relative y {self.relative_y}")
         eta = math.atan(self.relative_y / self.relative_x)
         delta = math.atan(2 * self.L * math.sin(eta) / self.L_ah)
 
@@ -50,8 +51,9 @@ class ParkingController(Node):
         drive_cmd.header.frame_id = "base_link"
         drive_cmd.header.stamp = current_time.to_msg()
         
+        error_dist = abs(self.relative_x)-self.parking_distance
         if self.backwards is False:
-            if self.relative_x < self.parking_distance and abs(eta) < self.acceptable_angle:
+            if error_dist <= 0.2 and error_dist >=0 and abs(eta) < self.acceptable_angle:#) <= self.parking_distance:# and abs(eta) < self.acceptable_angle:
                 # we're parked
                 drive_cmd.drive.speed = 0.0
                 drive_cmd.drive.steering_angle = 0.0
@@ -64,7 +66,7 @@ class ParkingController(Node):
                 drive_cmd.drive.speed = 1 * self.speed
                 drive_cmd.drive.steering_angle = delta
         else:
-            if self.relative_x > 2 * self.parking_distance:
+            if self.relative_x > self.parking_distance:
                 drive_cmd.drive.speed = 1 * self.speed
                 drive_cmd.drive.steering_angle = delta
                 self.backwards = False

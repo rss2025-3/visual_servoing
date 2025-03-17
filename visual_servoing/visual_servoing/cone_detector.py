@@ -49,16 +49,22 @@ class ConeDetector(Node):
         #################################
 
         image = self.bridge.imgmsg_to_cv2(image_msg, "bgr8")
-
-        b_box = cd_color_segmentation(image, None)
-        x = float(abs(b_box[1][0]-b_box[0][0])/2)
-        y = float(abs(b_box[1][1]-b_box[0][1])/2)
+	
+        b_box, length = cd_color_segmentation(image, None)
+        
+        self.get_logger().info(f'{length=}')
+        
+        x = float(abs(b_box[1][0]+b_box[0][0])/2)
+        #y = float(abs(b_box[1][1]+b_box[0][1])/2)
+        y = float(b_box[1][1])
 
         debug_msg = self.bridge.cv2_to_imgmsg(image, "bgr8")
         self.debug_pub.publish(debug_msg)
         pixel_msg = ConeLocationPixel()
         pixel_msg.u = x
         pixel_msg.v = y
+        #self.get_logger().info(f"{b_box=}")
+        self.get_logger().info(f"pixel y {y}")
 
         self.cone_pub.publish(pixel_msg)
 
