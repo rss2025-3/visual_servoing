@@ -1,0 +1,3 @@
+.venv/*
+visual_servoing/visual_servoing/__pycache__/*
+rosbags/*
